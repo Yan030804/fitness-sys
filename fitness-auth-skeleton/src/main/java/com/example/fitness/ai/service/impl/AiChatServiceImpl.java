@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 public class AiChatServiceImpl implements AiChatService {
 
     private static final String XIAOMI_MIMO_BASE_URL = "https://token-plan-cn.xiaomimimo.com/v1";
-    private static final String XIAOMI_MIMO_API_KEY = "tp-c6q33k0jfmsr15q0vjw77c4i8hhq2wd9lwkkc69lyur8ljdy";
+    private static final String XIAOMI_MIMO_API_KEY = "";
     private static final String XIAOMI_MIMO_MODEL_NAME = "mimo-v2.5-pro";
     private static final String RESERVATION_SUFFIX = "请问您是否需要进行预约？";
     private static final String FITNESS_TITLE = "【健身建议】";
