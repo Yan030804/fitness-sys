@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.workout.mapper.UserWorkoutRecordMapper">
+
+    <resultMap id="UserWorkoutRecordResultMap" type="com.example.fitness.record.entity.UserWorkoutRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="exerciseId" column="exercise_id"/>
+        <result property="workoutDate" column="workout_date"/>
+        <result property="durationMin" column="duration_min"/>
+        <result property="setsCount" column="sets_count"/>
+        <result property="repsCount" column="reps_count"/>
+        <result property="caloriesBurned" column="calories_burned"/>
+        <result property="completionStatus" column="completion_status"/>
+        <result property="feedbackScore" column="feedback_score"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <sql id="WorkoutVoColumns">
+        r.id,
+        r.user_id AS userId,
+        r.exercise_id AS exerciseId,
+        e.exercise_name AS exerciseName,
+        r.workout_date AS workoutDate,
+        r.duration_min AS durationMin,
+        r.sets_count AS setsCount,
+        r.reps_count AS repsCount,
+        r.calories_burned AS caloriesBurned,
+        r.completion_status AS completionStatus,
+        r.feedback_score AS feedbackScore,
+        r.remark,
+        r.created_at AS createdAt
+    </sql>
+
+    <sql id="WorkoutWhere">
+        <where>
+            r.user_id = #{userId}
+            <if test="query != null and query.workoutDateStart != null">
+                AND r.workout_date <![CDATA[>=]]> #{query.workoutDateStart}
+            </if>
+            <if test="query != null and query.workoutDateEnd != null">
+                AND r.workout_date <![CDATA[<=]]> #{query.workoutDateEnd}
+            </if>
+            <if test="query != null and query.exerciseId != null">
+                AND r.exercise_id = #{query.exerciseId}
+            </if>
+            <if test="query != null and query.completionStatus != null and query.completionStatus != ''">
+                AND r.completion_status = #{query.completionStatus}
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert" parameterType="com.example.fitness.record.entity.UserWorkoutRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_workout_record (
+            user_id,
+            exercise_id,
+            workout_date,
+            duration_min,
+            sets_count,
+            reps_count,
+            calories_burned,
+            completion_status,
+            feedback_score,
+            remark
+        ) VALUES (
+            #{userId},
+            #{exerciseId},
+            #{workoutDate},
+            #{durationMin},
+            #{setsCount},
+            #{repsCount},
+            #{caloriesBurned},
+            #{completionStatus},
+            #{feedbackScore},
+            #{remark}
+        )
+    </insert>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(1)
+        FROM user_workout_record r
+        <include refid="WorkoutWhere"/>
+    </select>
+
+    <select id="selectPage" resultType="com.example.fitness.workout.vo.WorkoutRecordVO">
+        SELECT
+            <include refid="WorkoutVoColumns"/>
+        FROM user_workout_record r
+        LEFT JOIN fit_exercise e ON r.exercise_id = e.id
+        <include refid="WorkoutWhere"/>
+        ORDER BY r.workout_date DESC, r.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectDetailByIdAndUserId" resultType="com.example.fitness.workout.vo.WorkoutRecordVO">
+        SELECT
+            <include refid="WorkoutVoColumns"/>
+        FROM user_workout_record r
+        LEFT JOIN fit_exercise e ON r.exercise_id = e.id
+        WHERE r.id = #{id}
+          AND r.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectByIdAndUserId" resultMap="UserWorkoutRecordResultMap">
+        SELECT *
+        FROM user_workout_record
+        WHERE id = #{id}
+          AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectAllForRecommendation" resultMap="UserWorkoutRecordResultMap">
+        SELECT *
+        FROM user_workout_record
+        WHERE user_id IS NOT NULL
+          AND exercise_id IS NOT NULL
+    </select>
+
+    <update id="updateByIdAndUserId" parameterType="com.example.fitness.record.entity.UserWorkoutRecord">
+        UPDATE user_workout_record
+        <set>
+            <if test="exerciseId != null">exercise_id = #{exerciseId},</if>
+            <if test="workoutDate != null">workout_date = #{workoutDate},</if>
+            <if test="durationMin != null">duration_min = #{durationMin},</if>
+            <if test="setsCount != null">sets_count = #{setsCount},</if>
+            <if test="repsCount != null">reps_count = #{repsCount},</if>
+            <if test="caloriesBurned != null">calories_burned = #{caloriesBurned},</if>
+            <if test="completionStatus != null">completion_status = #{completionStatus},</if>
+            <if test="feedbackScore != null">feedback_score = #{feedbackScore},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <delete id="deleteByIdAndUserId">
+        DELETE FROM user_workout_record
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </delete>
+</mapper>

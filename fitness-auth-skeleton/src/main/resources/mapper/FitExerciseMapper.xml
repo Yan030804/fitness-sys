@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.exercise.mapper.FitExerciseMapper">
+
+    <resultMap id="FitExerciseResultMap" type="com.example.fitness.exercise.entity.FitExercise">
+        <id property="id" column="id"/>
+        <result property="exerciseName" column="exercise_name"/>
+        <result property="category" column="category"/>
+        <result property="bodyPart" column="body_part"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="equipment" column="equipment"/>
+        <result property="caloriesPerHour" column="calories_per_hour"/>
+        <result property="defaultSets" column="default_sets"/>
+        <result property="defaultReps" column="default_reps"/>
+        <result property="durationMin" column="duration_min"/>
+        <result property="description" column="description"/>
+        <result property="caution" column="caution"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="ExerciseColumns">
+        id,
+        exercise_name AS exerciseName,
+        category,
+        body_part AS bodyPart,
+        difficulty,
+        equipment,
+        calories_per_hour AS caloriesPerHour,
+        default_sets AS defaultSets,
+        default_reps AS defaultReps,
+        duration_min AS durationMin,
+        description,
+        caution,
+        status,
+        created_at AS createdAt,
+        updated_at AS updatedAt
+    </sql>
+
+    <sql id="ExercisePageWhere">
+        <where>
+            status = 1
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="bodyPart != null and bodyPart != ''">
+                AND body_part = #{bodyPart}
+            </if>
+            <if test="difficulty != null and difficulty != ''">
+                AND difficulty = #{difficulty}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="AdminExercisePageWhere">
+        <where>
+            <if test="exerciseName != null and exerciseName != ''">
+                AND exercise_name LIKE CONCAT('%', #{exerciseName}, '%')
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="bodyPart != null and bodyPart != ''">
+                AND body_part = #{bodyPart}
+            </if>
+            <if test="difficulty != null and difficulty != ''">
+                AND difficulty = #{difficulty}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultMap="FitExerciseResultMap">
+        SELECT *
+        FROM fit_exercise
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectDetailById" resultType="com.example.fitness.exercise.vo.ExerciseVO">
+        SELECT
+            <include refid="ExerciseColumns"/>
+        FROM fit_exercise
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="countPage" resultType="long"
+            parameterType="com.example.fitness.exercise.dto.ExercisePageQuery">
+        SELECT COUNT(1)
+        FROM fit_exercise
+        <include refid="ExercisePageWhere"/>
+    </select>
+
+    <select id="selectPage" resultType="com.example.fitness.exercise.vo.ExerciseVO"
+            parameterType="com.example.fitness.exercise.dto.ExercisePageQuery">
+        SELECT
+            <include refid="ExerciseColumns"/>
+        FROM fit_exercise
+        <include refid="ExercisePageWhere"/>
+        ORDER BY id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countAdminPage" resultType="long"
+            parameterType="com.example.fitness.admin.exercise.dto.AdminExercisePageQuery">
+        SELECT COUNT(1)
+        FROM fit_exercise
+        <include refid="AdminExercisePageWhere"/>
+    </select>
+
+    <select id="selectAdminPage" resultType="com.example.fitness.exercise.vo.ExerciseVO"
+            parameterType="com.example.fitness.admin.exercise.dto.AdminExercisePageQuery">
+        SELECT
+            <include refid="ExerciseColumns"/>
+        FROM fit_exercise
+        <include refid="AdminExercisePageWhere"/>
+        ORDER BY id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" parameterType="com.example.fitness.exercise.entity.FitExercise"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fit_exercise (
+            exercise_name,
+            category,
+            body_part,
+            difficulty,
+            equipment,
+            calories_per_hour,
+            default_sets,
+            default_reps,
+            duration_min,
+            description,
+            caution,
+            status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{exerciseName},
+            #{category},
+            #{bodyPart},
+            #{difficulty},
+            #{equipment},
+            #{caloriesPerHour},
+            #{defaultSets},
+            #{defaultReps},
+            #{durationMin},
+            #{description},
+            #{caution},
+            #{status},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.example.fitness.exercise.entity.FitExercise">
+        UPDATE fit_exercise
+        SET exercise_name = #{exerciseName},
+            category = #{category},
+            body_part = #{bodyPart},
+            difficulty = #{difficulty},
+            equipment = #{equipment},
+            calories_per_hour = #{caloriesPerHour},
+            default_sets = #{defaultSets},
+            default_reps = #{defaultReps},
+            duration_min = #{durationMin},
+            description = #{description},
+            caution = #{caution},
+            status = #{status},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatusById">
+        UPDATE fit_exercise
+        SET status = #{status},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+</mapper>

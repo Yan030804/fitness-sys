@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.system.mapper.SysUserMapper">
+
+    <resultMap id="SysUserResultMap" type="com.example.fitness.system.entity.SysUser">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="realName" column="real_name"/>
+        <result property="nickname" column="nickname"/>
+        <result property="gender" column="gender"/>
+        <result property="age" column="age"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="heightCm" column="height_cm"/>
+        <result property="weightKg" column="weight_kg"/>
+        <result property="bmi" column="bmi"/>
+        <result property="fitnessGoal" column="fitness_goal"/>
+        <result property="activityLevel" column="activity_level"/>
+        <result property="dietPreference" column="diet_preference"/>
+        <result property="roleId" column="role_id"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="UserProfileSelectColumns">
+        u.id,
+        u.username,
+        u.real_name AS realName,
+        u.nickname,
+        u.gender,
+        u.age,
+        u.phone,
+        u.email,
+        u.height_cm AS heightCm,
+        u.weight_kg AS weightKg,
+        u.bmi,
+        u.fitness_goal AS fitnessGoal,
+        u.activity_level AS activityLevel,
+        u.diet_preference AS dietPreference,
+        u.role_id AS roleId,
+        r.role_code AS roleCode,
+        r.role_name AS roleName,
+        u.status,
+        u.created_at AS createdAt,
+        u.updated_at AS updatedAt
+    </sql>
+
+    <sql id="AdminUserPageWhere">
+        <where>
+            <if test="username != null and username != ''">
+                AND u.username LIKE CONCAT('%', #{username}, '%')
+            </if>
+            <if test="realName != null and realName != ''">
+                AND u.real_name LIKE CONCAT('%', #{realName}, '%')
+            </if>
+            <if test="phone != null and phone != ''">
+                AND u.phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email}, '%')
+            </if>
+            <if test="status != null">
+                AND u.status = #{status}
+            </if>
+            <if test="roleCode != null and roleCode != ''">
+                AND r.role_code = #{roleCode}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectById" resultMap="SysUserResultMap">
+        SELECT *
+        FROM sys_user
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectByUsername" resultMap="SysUserResultMap">
+        SELECT *
+        FROM sys_user
+        WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <select id="existsByUsername" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE username = #{username}
+    </select>
+
+    <select id="existsByPhone" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE phone = #{phone}
+    </select>
+
+    <select id="existsByEmail" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE email = #{email}
+    </select>
+
+    <select id="existsByPhoneExcludeId" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE phone = #{phone}
+          AND id != #{excludeId}
+    </select>
+
+    <select id="existsByEmailExcludeId" resultType="int">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE email = #{email}
+          AND id != #{excludeId}
+    </select>
+
+    <insert id="insert" parameterType="com.example.fitness.system.entity.SysUser"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user (
+            username,
+            password_hash,
+            real_name,
+            nickname,
+            phone,
+            email,
+            role_id,
+            status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{username},
+            #{passwordHash},
+            #{realName},
+            #{nickname},
+            #{phone},
+            #{email},
+            #{roleId},
+            #{status},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <update id="updateProfileById" parameterType="com.example.fitness.system.entity.SysUser">
+        UPDATE sys_user
+        SET real_name = #{realName},
+            nickname = #{nickname},
+            gender = #{gender},
+            age = #{age},
+            phone = #{phone},
+            email = #{email},
+            height_cm = #{heightCm},
+            weight_kg = #{weightKg},
+            bmi = #{bmi},
+            fitness_goal = #{fitnessGoal},
+            activity_level = #{activityLevel},
+            diet_preference = #{dietPreference},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePasswordById">
+        UPDATE sys_user
+        SET password_hash = #{passwordHash},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatusById">
+        UPDATE sys_user
+        SET status = #{status},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectUserProfileById" resultType="com.example.fitness.auth.vo.UserProfileVO">
+        SELECT
+            <include refid="UserProfileSelectColumns"/>
+        FROM sys_user u
+        LEFT JOIN sys_role r ON u.role_id = r.id
+        WHERE u.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="countAdminUserPage" resultType="long"
+            parameterType="com.example.fitness.admin.user.dto.AdminUserPageQuery">
+        SELECT COUNT(1)
+        FROM sys_user u
+        LEFT JOIN sys_role r ON u.role_id = r.id
+        <include refid="AdminUserPageWhere"/>
+    </select>
+
+    <select id="selectAdminUserPage" resultType="com.example.fitness.auth.vo.UserProfileVO"
+            parameterType="com.example.fitness.admin.user.dto.AdminUserPageQuery">
+        SELECT
+            <include refid="UserProfileSelectColumns"/>
+        FROM sys_user u
+        LEFT JOIN sys_role r ON u.role_id = r.id
+        <include refid="AdminUserPageWhere"/>
+        ORDER BY u.id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+</mapper>

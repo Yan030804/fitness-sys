@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.plan.mapper.FitnessPlanItemMapper">
+
+    <resultMap id="FitnessPlanItemResultMap" type="com.example.fitness.plan.entity.FitnessPlanItem">
+        <id property="id" column="id"/>
+        <result property="planId" column="plan_id"/>
+        <result property="itemType" column="item_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="targetName" column="target_name"/>
+        <result property="itemDate" column="item_date"/>
+        <result property="itemTime" column="item_time"/>
+        <result property="setsCount" column="sets_count"/>
+        <result property="repsCount" column="reps_count"/>
+        <result property="durationMin" column="duration_min"/>
+        <result property="intakeGrams" column="intake_grams"/>
+        <result property="calories" column="calories"/>
+        <result property="completionStatus" column="completion_status"/>
+        <result property="sortNo" column="sort_no"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="PlanItemVoColumns">
+        id,
+        plan_id AS planId,
+        item_type AS itemType,
+        target_id AS targetId,
+        target_name AS targetName,
+        item_date AS itemDate,
+        item_time AS itemTime,
+        sets_count AS setsCount,
+        reps_count AS repsCount,
+        duration_min AS durationMin,
+        intake_grams AS intakeGrams,
+        calories,
+        completion_status AS completionStatus,
+        sort_no AS sortNo,
+        remark,
+        created_at AS createdAt,
+        updated_at AS updatedAt
+    </sql>
+
+    <insert id="insert" parameterType="com.example.fitness.plan.entity.FitnessPlanItem"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fitness_plan_item (
+            plan_id,
+            item_type,
+            target_id,
+            target_name,
+            item_date,
+            item_time,
+            sets_count,
+            reps_count,
+            duration_min,
+            intake_grams,
+            calories,
+            completion_status,
+            sort_no,
+            remark
+        ) VALUES (
+            #{planId},
+            #{itemType},
+            #{targetId},
+            #{targetName},
+            #{itemDate},
+            #{itemTime},
+            #{setsCount},
+            #{repsCount},
+            #{durationMin},
+            #{intakeGrams},
+            #{calories},
+            #{completionStatus},
+            #{sortNo},
+            #{remark}
+        )
+    </insert>
+
+    <select id="selectByPlanId" resultType="com.example.fitness.plan.vo.PlanItemVO">
+        SELECT
+            <include refid="PlanItemVoColumns"/>
+        FROM fitness_plan_item
+        WHERE plan_id = #{planId}
+        ORDER BY COALESCE(sort_no, 999999) ASC,
+                 item_date ASC,
+                 item_time ASC,
+                 id ASC
+    </select>
+
+    <select id="selectById" resultMap="FitnessPlanItemResultMap">
+        SELECT *
+        FROM fitness_plan_item
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectDetailById" resultType="com.example.fitness.plan.vo.PlanItemVO">
+        SELECT
+            <include refid="PlanItemVoColumns"/>
+        FROM fitness_plan_item
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <update id="updateById" parameterType="com.example.fitness.plan.entity.FitnessPlanItem">
+        UPDATE fitness_plan_item
+        <set>
+            <if test="itemType != null">item_type = #{itemType},</if>
+            <if test="targetId != null">target_id = #{targetId},</if>
+            <if test="targetName != null">target_name = #{targetName},</if>
+            <if test="itemDate != null">item_date = #{itemDate},</if>
+            <if test="itemTime != null">item_time = #{itemTime},</if>
+            <if test="setsCount != null">sets_count = #{setsCount},</if>
+            <if test="repsCount != null">reps_count = #{repsCount},</if>
+            <if test="durationMin != null">duration_min = #{durationMin},</if>
+            <if test="intakeGrams != null">intake_grams = #{intakeGrams},</if>
+            <if test="calories != null">calories = #{calories},</if>
+            <if test="completionStatus != null">completion_status = #{completionStatus},</if>
+            <if test="sortNo != null">sort_no = #{sortNo},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fitness_plan_item
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByPlanId">
+        DELETE FROM fitness_plan_item
+        WHERE plan_id = #{planId}
+    </delete>
+</mapper>

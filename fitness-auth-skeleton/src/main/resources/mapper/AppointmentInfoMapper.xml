@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.appointment.mapper.AppointmentInfoMapper">
+
+    <resultMap id="AppointmentInfoResultMap" type="com.example.fitness.appointment.entity.AppointmentInfo">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="gender" column="gender"/>
+        <result property="age" column="age"/>
+        <result property="appointmentType" column="appointment_type"/>
+        <result property="reserveDate" column="reserve_date"/>
+        <result property="reserveTime" column="reserve_time"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="AppointmentVoColumns">
+        a.id,
+        a.user_id AS userId,
+        a.name,
+        a.phone,
+        a.gender,
+        a.age,
+        a.appointment_type AS appointmentType,
+        a.reserve_date AS reserveDate,
+        a.reserve_time AS reserveTime,
+        a.status,
+        a.remark,
+        a.created_at AS createdAt,
+        a.updated_at AS updatedAt
+    </sql>
+
+    <sql id="UserAppointmentWhere">
+        <where>
+            a.user_id = #{userId}
+            <if test="query != null and query.status != null and query.status != ''">
+                AND a.status = #{query.status}
+            </if>
+            <if test="query != null and query.reserveDateStart != null">
+                AND a.reserve_date <![CDATA[>=]]> #{query.reserveDateStart}
+            </if>
+            <if test="query != null and query.reserveDateEnd != null">
+                AND a.reserve_date <![CDATA[<=]]> #{query.reserveDateEnd}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="AdminAppointmentWhere">
+        <where>
+            <if test="query.userId != null">
+                AND a.user_id = #{query.userId}
+            </if>
+            <if test="query.appointmentType != null and query.appointmentType != ''">
+                AND a.appointment_type = #{query.appointmentType}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND a.status = #{query.status}
+            </if>
+            <if test="query.reserveDate != null">
+                AND a.reserve_date = #{query.reserveDate}
+            </if>
+            <if test="phone != null and phone != ''">
+                AND a.phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert" parameterType="com.example.fitness.appointment.entity.AppointmentInfo"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO appointment_info (
+            user_id,
+            name,
+            phone,
+            gender,
+            age,
+            appointment_type,
+            reserve_date,
+            reserve_time,
+            status,
+            remark
+        ) VALUES (
+            #{userId},
+            #{name},
+            #{phone},
+            #{gender},
+            #{age},
+            #{appointmentType},
+            #{reserveDate},
+            #{reserveTime},
+            #{status},
+            #{remark}
+        )
+    </insert>
+
+    <select id="countUserPage" resultType="long">
+        SELECT COUNT(1)
+        FROM appointment_info a
+        <include refid="UserAppointmentWhere"/>
+    </select>
+
+    <select id="selectUserPage" resultType="com.example.fitness.appointment.vo.AppointmentVO">
+        SELECT
+            <include refid="AppointmentVoColumns"/>
+        FROM appointment_info a
+        <include refid="UserAppointmentWhere"/>
+        ORDER BY a.reserve_date DESC, a.reserve_time DESC, a.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectDetailByIdAndUserId" resultType="com.example.fitness.appointment.vo.AppointmentVO">
+        SELECT
+            <include refid="AppointmentVoColumns"/>
+        FROM appointment_info a
+        WHERE a.id = #{id}
+          AND a.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectByIdAndUserId" resultMap="AppointmentInfoResultMap">
+        SELECT *
+        FROM appointment_info
+        WHERE id = #{id}
+          AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <update id="updateByIdAndUserId" parameterType="com.example.fitness.appointment.entity.AppointmentInfo">
+        UPDATE appointment_info
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="appointmentType != null">appointment_type = #{appointmentType},</if>
+            <if test="reserveDate != null">reserve_date = #{reserveDate},</if>
+            <if test="reserveTime != null">reserve_time = #{reserveTime},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(1)
+        FROM appointment_info a
+        <include refid="AdminAppointmentWhere"/>
+    </select>
+
+    <select id="selectAdminPage" resultType="com.example.fitness.appointment.vo.AppointmentVO">
+        SELECT
+            <include refid="AppointmentVoColumns"/>
+        FROM appointment_info a
+        <include refid="AdminAppointmentWhere"/>
+        ORDER BY a.reserve_date DESC, a.reserve_time DESC, a.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectDetailById" resultType="com.example.fitness.appointment.vo.AppointmentVO">
+        SELECT
+            <include refid="AppointmentVoColumns"/>
+        FROM appointment_info a
+        WHERE a.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectById" resultMap="AppointmentInfoResultMap">
+        SELECT *
+        FROM appointment_info
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <update id="updateStatusById">
+        UPDATE appointment_info
+        <set>
+            status = #{status},
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+</mapper>

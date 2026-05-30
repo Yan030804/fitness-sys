@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.diet.mapper.UserDietRecordMapper">
+
+    <resultMap id="UserDietRecordResultMap" type="com.example.fitness.record.entity.UserDietRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="foodId" column="food_id"/>
+        <result property="dietDate" column="diet_date"/>
+        <result property="mealType" column="meal_type"/>
+        <result property="intakeGrams" column="intake_grams"/>
+        <result property="caloriesIntake" column="calories_intake"/>
+        <result property="isRecommended" column="is_recommended"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <sql id="DietVoColumns">
+        r.id,
+        r.user_id AS userId,
+        r.food_id AS foodId,
+        f.food_name AS foodName,
+        r.diet_date AS dietDate,
+        r.meal_type AS mealType,
+        r.intake_grams AS intakeGrams,
+        r.calories_intake AS caloriesIntake,
+        r.is_recommended AS isRecommended,
+        r.remark,
+        r.created_at AS createdAt
+    </sql>
+
+    <sql id="DietWhere">
+        <where>
+            r.user_id = #{userId}
+            <if test="query != null and query.dietDateStart != null">
+                AND r.diet_date <![CDATA[>=]]> #{query.dietDateStart}
+            </if>
+            <if test="query != null and query.dietDateEnd != null">
+                AND r.diet_date <![CDATA[<=]]> #{query.dietDateEnd}
+            </if>
+            <if test="query != null and query.mealType != null and query.mealType != ''">
+                AND r.meal_type = #{query.mealType}
+            </if>
+            <if test="query != null and query.foodId != null">
+                AND r.food_id = #{query.foodId}
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert" parameterType="com.example.fitness.record.entity.UserDietRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_diet_record (
+            user_id,
+            food_id,
+            diet_date,
+            meal_type,
+            intake_grams,
+            calories_intake,
+            is_recommended,
+            remark
+        ) VALUES (
+            #{userId},
+            #{foodId},
+            #{dietDate},
+            #{mealType},
+            #{intakeGrams},
+            #{caloriesIntake},
+            #{isRecommended},
+            #{remark}
+        )
+    </insert>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(1)
+        FROM user_diet_record r
+        <include refid="DietWhere"/>
+    </select>
+
+    <select id="selectPage" resultType="com.example.fitness.diet.vo.DietRecordVO">
+        SELECT
+            <include refid="DietVoColumns"/>
+        FROM user_diet_record r
+        LEFT JOIN fit_food f ON r.food_id = f.id
+        <include refid="DietWhere"/>
+        ORDER BY r.diet_date DESC, r.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectDetailByIdAndUserId" resultType="com.example.fitness.diet.vo.DietRecordVO">
+        SELECT
+            <include refid="DietVoColumns"/>
+        FROM user_diet_record r
+        LEFT JOIN fit_food f ON r.food_id = f.id
+        WHERE r.id = #{id}
+          AND r.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectByIdAndUserId" resultMap="UserDietRecordResultMap">
+        SELECT *
+        FROM user_diet_record
+        WHERE id = #{id}
+          AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectAllForRecommendation" resultMap="UserDietRecordResultMap">
+        SELECT *
+        FROM user_diet_record
+        WHERE user_id IS NOT NULL
+          AND food_id IS NOT NULL
+    </select>
+
+    <update id="updateByIdAndUserId" parameterType="com.example.fitness.record.entity.UserDietRecord">
+        UPDATE user_diet_record
+        <set>
+            <if test="foodId != null">food_id = #{foodId},</if>
+            <if test="dietDate != null">diet_date = #{dietDate},</if>
+            <if test="mealType != null">meal_type = #{mealType},</if>
+            <if test="intakeGrams != null">intake_grams = #{intakeGrams},</if>
+            <if test="caloriesIntake != null">calories_intake = #{caloriesIntake},</if>
+            <if test="isRecommended != null">is_recommended = #{isRecommended},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <delete id="deleteByIdAndUserId">
+        DELETE FROM user_diet_record
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </delete>
+</mapper>

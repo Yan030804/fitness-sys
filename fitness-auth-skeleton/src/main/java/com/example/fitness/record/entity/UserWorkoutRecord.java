@@ -1,0 +1,22 @@
+package com.example.fitness.record.entity;
+
+import lombok.Data;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+public class UserWorkoutRecord {
+    private Long id;
+    private Long userId;
+    private Long exerciseId;
+    private LocalDate workoutDate;
+    private Integer durationMin;
+    private Integer setsCount;
+    private Integer repsCount;
+    private Integer caloriesBurned;
+    private String completionStatus;
+    private Integer feedbackScore;
+    private String remark;
+    private LocalDateTime createdAt;
+}

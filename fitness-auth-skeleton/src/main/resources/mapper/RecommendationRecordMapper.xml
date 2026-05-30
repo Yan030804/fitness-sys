@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.recommendation.mapper.RecommendationRecordMapper">
+
+    <resultMap id="RecommendationRecordResultMap" type="com.example.fitness.recommendation.entity.RecommendationRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="recType" column="rec_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="targetName" column="target_name"/>
+        <result property="algorithmType" column="algorithm_type"/>
+        <result property="score" column="score"/>
+        <result property="reason" column="reason"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <sql id="RecommendationVoColumns">
+        r.id,
+        r.user_id AS userId,
+        r.rec_type AS recType,
+        r.target_id AS targetId,
+        r.target_name AS targetName,
+        r.algorithm_type AS algorithmType,
+        r.score,
+        r.reason,
+        r.created_at AS createdAt
+    </sql>
+
+    <sql id="UserRecommendationWhere">
+        <where>
+            r.user_id = #{userId}
+            <if test="query != null and query.recType != null and query.recType != ''">
+                AND r.rec_type = #{query.recType}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="AdminRecommendationWhere">
+        <where>
+            <if test="query.userId != null">
+                AND r.user_id = #{query.userId}
+            </if>
+            <if test="query.recType != null and query.recType != ''">
+                AND r.rec_type = #{query.recType}
+            </if>
+            <if test="phone != null and phone != ''">
+                AND u.phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert" parameterType="com.example.fitness.recommendation.entity.RecommendationRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO recommendation_record (
+            user_id,
+            rec_type,
+            target_id,
+            target_name,
+            algorithm_type,
+            score,
+            reason
+        ) VALUES (
+            #{userId},
+            #{recType},
+            #{targetId},
+            #{targetName},
+            #{algorithmType},
+            #{score},
+            #{reason}
+        )
+    </insert>
+
+    <select id="selectByIdAndUserId" resultMap="RecommendationRecordResultMap">
+        SELECT *
+        FROM recommendation_record
+        WHERE id = #{id}
+          AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectDetailByIdAndUserId" resultType="com.example.fitness.recommendation.vo.RecommendationVO">
+        SELECT
+            <include refid="RecommendationVoColumns"/>
+        FROM recommendation_record r
+        WHERE r.id = #{id}
+          AND r.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="countUserPage" resultType="long">
+        SELECT COUNT(1)
+        FROM recommendation_record r
+        <include refid="UserRecommendationWhere"/>
+    </select>
+
+    <select id="selectUserPage" resultType="com.example.fitness.recommendation.vo.RecommendationVO">
+        SELECT
+            <include refid="RecommendationVoColumns"/>
+        FROM recommendation_record r
+        <include refid="UserRecommendationWhere"/>
+        ORDER BY r.created_at DESC, r.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectLatestTime" resultType="java.time.LocalDateTime">
+        SELECT MAX(created_at)
+        FROM recommendation_record
+        WHERE user_id = #{userId}
+        <if test="recType != null and recType != ''">
+            AND rec_type = #{recType}
+        </if>
+    </select>
+
+    <select id="selectLatestList" resultType="com.example.fitness.recommendation.vo.RecommendationVO">
+        SELECT
+            <include refid="RecommendationVoColumns"/>
+        FROM recommendation_record r
+        WHERE r.user_id = #{userId}
+          AND r.created_at = #{latestTime}
+        <if test="recType != null and recType != ''">
+            AND r.rec_type = #{recType}
+        </if>
+        ORDER BY r.id DESC
+    </select>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(1)
+        FROM recommendation_record r
+        LEFT JOIN sys_user u ON r.user_id = u.id
+        <include refid="AdminRecommendationWhere"/>
+    </select>
+
+    <select id="selectAdminPage" resultType="com.example.fitness.recommendation.vo.RecommendationVO">
+        SELECT
+            <include refid="RecommendationVoColumns"/>
+        FROM recommendation_record r
+        LEFT JOIN sys_user u ON r.user_id = u.id
+        <include refid="AdminRecommendationWhere"/>
+        ORDER BY r.created_at DESC, r.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectActiveExercises" resultType="com.example.fitness.exercise.entity.FitExercise">
+        SELECT
+            id,
+            exercise_name AS exerciseName,
+            category,
+            body_part AS bodyPart,
+            difficulty,
+            equipment,
+            calories_per_hour AS caloriesPerHour,
+            default_sets AS defaultSets,
+            default_reps AS defaultReps,
+            duration_min AS durationMin,
+            description,
+            caution,
+            status,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+        FROM fit_exercise
+        WHERE status = 1
+        ORDER BY id DESC
+        LIMIT 50
+    </select>
+
+    <select id="selectActiveFoods" resultType="com.example.fitness.food.entity.FitFood">
+        SELECT
+            id,
+            food_name AS foodName,
+            category,
+            calories_per_100g AS caloriesPer100g,
+            protein_per_100g AS proteinPer100g,
+            fat_per_100g AS fatPer100g,
+            carb_per_100g AS carbPer100g,
+            suitable_goal AS suitableGoal,
+            suitable_time AS suitableTime,
+            description,
+            status,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+        FROM fit_food
+        WHERE status = 1
+        ORDER BY id DESC
+        LIMIT 50
+    </select>
+
+    <select id="selectRecommendablePlansByUserId" resultType="com.example.fitness.plan.vo.PlanVO">
+        SELECT
+            p.id,
+            p.user_id AS userId,
+            p.plan_type AS planType,
+            p.plan_name AS planName,
+            p.cycle_type AS cycleType,
+            p.start_date AS startDate,
+            p.end_date AS endDate,
+            p.target_goal AS targetGoal,
+            p.source_type AS sourceType,
+            p.status,
+            p.notes,
+            p.created_at AS createdAt,
+            p.updated_at AS updatedAt
+        FROM fitness_plan p
+        WHERE p.user_id = #{userId}
+        ORDER BY
+            CASE
+                WHEN UPPER(COALESCE(p.status, '')) IN ('PENDING', 'IN_PROGRESS', '进行中', '待执行') THEN 0
+                WHEN UPPER(COALESCE(p.status, '')) IN ('DONE', 'COMPLETED', '已完成') THEN 1
+                ELSE 2
+            END,
+            p.updated_at DESC,
+            p.id DESC
+        LIMIT 10
+    </select>
+
+    <select id="selectRecentWorkoutCategories" resultType="string">
+        SELECT e.category
+        FROM user_workout_record r
+        LEFT JOIN fit_exercise e ON r.exercise_id = e.id
+        WHERE r.user_id = #{userId}
+          AND e.category IS NOT NULL
+          AND e.category != ''
+        ORDER BY r.workout_date DESC, r.id DESC
+        LIMIT 5
+    </select>
+
+    <select id="selectRecentWorkoutBodyParts" resultType="string">
+        SELECT e.body_part
+        FROM user_workout_record r
+        LEFT JOIN fit_exercise e ON r.exercise_id = e.id
+        WHERE r.user_id = #{userId}
+          AND e.body_part IS NOT NULL
+          AND e.body_part != ''
+        ORDER BY r.workout_date DESC, r.id DESC
+        LIMIT 5
+    </select>
+
+    <select id="selectRecentMealTypes" resultType="string">
+        SELECT meal_type
+        FROM user_diet_record
+        WHERE user_id = #{userId}
+          AND meal_type IS NOT NULL
+          AND meal_type != ''
+        ORDER BY diet_date DESC, id DESC
+        LIMIT 5
+    </select>
+
+    <select id="selectRecentRecommendedTargetIds" resultType="long">
+        SELECT target_id
+        FROM recommendation_record
+        WHERE user_id = #{userId}
+          <if test="recType != null and recType != ''">
+              AND rec_type = #{recType}
+          </if>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

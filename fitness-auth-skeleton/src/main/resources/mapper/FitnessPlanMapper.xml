@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.fitness.plan.mapper.FitnessPlanMapper">
+
+    <resultMap id="FitnessPlanResultMap" type="com.example.fitness.plan.entity.FitnessPlan">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="planType" column="plan_type"/>
+        <result property="planName" column="plan_name"/>
+        <result property="cycleType" column="cycle_type"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="targetGoal" column="target_goal"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="status" column="status"/>
+        <result property="notes" column="notes"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="PlanVoColumns">
+        p.id,
+        p.user_id AS userId,
+        p.plan_type AS planType,
+        p.plan_name AS planName,
+        p.cycle_type AS cycleType,
+        p.start_date AS startDate,
+        p.end_date AS endDate,
+        p.target_goal AS targetGoal,
+        p.source_type AS sourceType,
+        p.status,
+        p.notes,
+        p.created_at AS createdAt,
+        p.updated_at AS updatedAt
+    </sql>
+
+    <sql id="UserPlanWhere">
+        <where>
+            p.user_id = #{userId}
+            <if test="query != null and query.planType != null and query.planType != ''">
+                AND p.plan_type = #{query.planType}
+            </if>
+            <if test="query != null and query.status != null and query.status != ''">
+                AND p.status = #{query.status}
+            </if>
+            <if test="query != null and query.startDate != null">
+                AND p.start_date <![CDATA[>=]]> #{query.startDate}
+            </if>
+            <if test="query != null and query.endDate != null">
+                AND p.end_date <![CDATA[<=]]> #{query.endDate}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="AdminPlanWhere">
+        <where>
+            <if test="query.userId != null">
+                AND p.user_id = #{query.userId}
+            </if>
+            <if test="query.planType != null and query.planType != ''">
+                AND p.plan_type = #{query.planType}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND p.status = #{query.status}
+            </if>
+            <if test="phone != null and phone != ''">
+                AND u.phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert" parameterType="com.example.fitness.plan.entity.FitnessPlan"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fitness_plan (
+            user_id,
+            plan_type,
+            plan_name,
+            cycle_type,
+            start_date,
+            end_date,
+            target_goal,
+            source_type,
+            status,
+            notes
+        ) VALUES (
+            #{userId},
+            #{planType},
+            #{planName},
+            #{cycleType},
+            #{startDate},
+            #{endDate},
+            #{targetGoal},
+            #{sourceType},
+            #{status},
+            #{notes}
+        )
+    </insert>
+
+    <select id="countUserPage" resultType="long">
+        SELECT COUNT(1)
+        FROM fitness_plan p
+        <include refid="UserPlanWhere"/>
+    </select>
+
+    <select id="selectUserPage" resultType="com.example.fitness.plan.vo.PlanVO">
+        SELECT
+            <include refid="PlanVoColumns"/>
+        FROM fitness_plan p
+        <include refid="UserPlanWhere"/>
+        ORDER BY p.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectDetailByIdAndUserId" resultType="com.example.fitness.plan.vo.PlanVO">
+        SELECT
+            <include refid="PlanVoColumns"/>
+        FROM fitness_plan p
+        WHERE p.id = #{id}
+          AND p.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectByIdAndUserId" resultMap="FitnessPlanResultMap">
+        SELECT *
+        FROM fitness_plan
+        WHERE id = #{id}
+          AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="selectById" resultMap="FitnessPlanResultMap">
+        SELECT *
+        FROM fitness_plan
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <update id="updateByIdAndUserId" parameterType="com.example.fitness.plan.entity.FitnessPlan">
+        UPDATE fitness_plan
+        <set>
+            <if test="planName != null">plan_name = #{planName},</if>
+            <if test="cycleType != null">cycle_type = #{cycleType},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="targetGoal != null">target_goal = #{targetGoal},</if>
+            <if test="sourceType != null">source_type = #{sourceType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="notes != null">notes = #{notes},</if>
+        </set>
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <delete id="deleteByIdAndUserId">
+        DELETE FROM fitness_plan
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </delete>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(1)
+        FROM fitness_plan p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        <include refid="AdminPlanWhere"/>
+    </select>
+
+    <select id="selectAdminPage" resultType="com.example.fitness.plan.vo.PlanVO">
+        SELECT
+            <include refid="PlanVoColumns"/>
+        FROM fitness_plan p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        <include refid="AdminPlanWhere"/>
+        ORDER BY p.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+</mapper>
